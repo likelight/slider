@@ -54,10 +54,14 @@ neverModules.modules.slider.prototype = {
     this._bar     = null;
     this._slider  = null;
 	this._box     = null;  
-    this._wrapper = null;
+    this._wrapper = null;  
     this._target  = this.parent.document.getElementById(this.targetId);
     if (this.min>this.max){var x=this.min;this.min=this.max;this.max=x;}
     this._value   = this.min;
+  },
+
+  create:function(){
+  	this._createSlider();
   },
   //create Slider element 
    _createSlider: function () { with(this) {
@@ -83,11 +87,125 @@ neverModules.modules.slider.prototype = {
      _slider.onclick = function (evt) { _self._moveTo(evt);
       },
       // function to create bar
-     createBar:function(){
-
-     },
+     createBar:function(){with(this){
+     	var _self = this;
+     	_bar = this.parent.document.createElement("div");//create a div to show the bar
+     	_wrapper.appendChild(_bar);
+     	_bar.title = hints;
+     	_bar.id = targetId+"_bar";
+     	_bar.className = barCss;
+     	_bar.style.position = "absolute";
+     	_bar.onmousedown = function(evt){_self._initMoveSlider(evt);
+     	}
+     }},
       // function to create box
-     createBox:function(){
+     createBox:function(){with(this){
+     	_box = this.parent.document.createElement("input");
+     	_box.id = targetId+"_box";
 
+     	_box.style.position = "absolute";
+     	_box.type = "text";
+     	_box.className = boxCss;
+     	_box.value = _value;
+     	_wrapper.appendChild(_box);
+
+
+	_box.onkeydown = function(evt){
+			evt = (evt) ? evt : ((window.event) ? window.event : null); 
+			if(evt.keyCode==13){
+				this.blur();
+			}
+				
+			if(evt.keyCode == 38)                          //keycontrol 
+			{
+				var iNum = parseInt(this.value, 10) + step;
+				iNum = iNum>max?max:iNum;                 
+				this.value = iNum;
+				
+			}
+														  
+			if(evt.keyCode ==40)
+			{
+				var iNum = parseInt(this.value, 10) - step;	
+				iNum = iNum<min?min:iNum;                 
+				this.value = iNum;	
+			}
+		};
+	_box.onkeyup = function(evt){
+			if(this.value != '' && this.value != 'undefined' && this.value != null){
+				var temValue = parseInt(this.value, 10);
+				
+				if(/^[1-9]\d*|0$/.test(temValue)){        
+					this.value = temValue;                
+				}
+				else{
+					this.value = min;                     
+				}
+			}	
+		
+		};
+
+	_box.onblur = function(){
+		var temValue = parseInt(this.value, 10);	
+			if(/^[1-9]\d*|0$/.test(temValue)){            
+				temValue = temValue>max?max:temValue<min?min:temValue;
+				
+				if((temValue%step) != 0){				 
+					temValue = (parseInt(temValue/step) + 1) * step;
+				}
+				this.value = temValue; 
+				wsetValue(temValue); 					  
+			}
+			else{
+				this.value = min; 						
+				wsetValue(min); 
+			}
+			fireChange();								
+			fireEnd();
+
+	};
+
+	}},
+
+    wsetValue:function(n){with(this){
+
+    	if(!_bar) return;
+    	n=_Number(Number(n));
+    	n=n>max?max:n;
+    	n=n<min?min:n;
+    	_bar.style.left = Math.round((n-min)*((_slider.offsetWidth)/(max-min)))+"px";
+    	_value = n;
+    	if(bBox)
+    	{
+    		_box.value = _value;   //set the value of box;
+    	}
+    }},
+
+     
+      fireStart: function () {
+    	his.onstart.call(this);
+  	 },
+
+  	  fireChange: function () {
+    	this.onchange.call(this);
+  	},
+
+  		fireEnd: function () {
+    	this.onend.call(this);
+  	},
+
+      _Number: function (n) {
+   		 return isNaN(n)?0:n;
      },
+     // get the value of slider
+      getValue: function () {
+    	return this._Number(this._value);
+  	},
+
+  	 setTitle: function (tips) {
+		this._bar.title = tips;
+		this._target.title = tips;
+  	},
+
+
 }
